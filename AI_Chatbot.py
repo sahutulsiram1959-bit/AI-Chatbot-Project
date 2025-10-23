@@ -1,10 +1,25 @@
-import os
 import streamlit as st
 import google.genai as genai
+import os
+
+# ==========================
+# === Load API Key ===
+# ==========================
+try:
+    # Streamlit Cloud: use secrets
+    api_key = st.secrets["GENAI_API_KEY"]
+except:
+    # Local testing: load from .env
+    from dotenv import load_dotenv
+    load_dotenv()
+    api_key = os.getenv("GENAI_API_KEY")
 
 # Initialize Gemini client
-client = genai.Client()
+client = genai.Client(api_key=api_key)
 
+# ==========================
+# === Streamlit UI Setup ===
+# ==========================
 st.set_page_config(page_title="Gemini Chatbot", page_icon="🤖", layout="centered")
 st.title("🤖 Gemini Chatbot Web App")
 
@@ -17,20 +32,20 @@ with st.form(key="chat_form", clear_on_submit=True):
     user_input = st.text_input("Type your message here...")
     submit_button = st.form_submit_button("Send")
 
+# Handle user input
 if submit_button and user_input:
-    # Save user message
     st.session_state.messages.append({"role": "user", "content": user_input})
 
-    # Get AI response
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=user_input
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_input
+        )
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+    except Exception as e:
+        st.error(f"Error generating response: {e}")
 
-    # Save AI response
-    st.session_state.messages.append({"role": "assistant", "content": response.text})
-
-# Display chat messages with bubbles
+# Display chat messages
 for msg in st.session_state.messages:
     if msg["role"] == "user":
         st.markdown(
