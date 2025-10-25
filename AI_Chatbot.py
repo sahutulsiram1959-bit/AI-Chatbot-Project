@@ -1,6 +1,7 @@
 import streamlit as st
 import google.genai as genai
 import os
+from dotenv import load_dotenv
 
 # ==========================
 # === Load API Key ===
@@ -8,13 +9,21 @@ import os
 try:
     # Streamlit Cloud: use secrets
     api_key = st.secrets["GENAI_API_KEY"]
-except:
-    # Local testing: load from .env
-    from dotenv import load_dotenv
-    load_dotenv()
+    st.write("✅ API key loaded from Streamlit secrets")
+except Exception:
+    # Local testing: load from key.env
+    env_path = os.path.join(os.path.dirname(__file__), "key.env")
+    load_dotenv(dotenv_path=env_path)
     api_key = os.getenv("GENAI_API_KEY")
+    if api_key:
+        st.write("✅ API key loaded from key.env")
+    else:
+        st.error("❌ API key not found! Check key.env or Streamlit secrets.")
+        st.stop()
 
-# Initialize Gemini client
+# ==========================
+# === Initialize Gemini client ===
+# ==========================
 client = genai.Client(api_key=api_key)
 
 # ==========================
